@@ -45,7 +45,7 @@ function renderCategories() {
     questionsData.categories.forEach(category => {
         const li = document.createElement('li');
         li.innerHTML = `
-            <button class="category-btn" data-category="${category.name}">
+            <button class="category-btn category-btn-child" data-category="${category.name}">
                 <span class="category-icon">${category.icon || '📁'}</span>
                 ${category.name}
             </button>

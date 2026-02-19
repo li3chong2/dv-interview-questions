@@ -97,7 +97,12 @@ body {
     color: #ffffff;
 }
 
-.category-icon {
+.category-btn-child {
+    padding-left: 2rem;
+    font-size: 0.9rem;
+}
+
+
     font-size: 1.25rem;
 }
 
