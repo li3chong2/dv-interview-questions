@@ -2,13 +2,110 @@
 {
   "categories": [
     {
-      "name": "SystemVerilog Basics",
-      "icon": "ð",
+      "name": "Verilog for ASIC Design",
+      "icon": "🔧",
       "questions": [
         {
           "id": 1,
-          "question": "What is the difference between logic and reg in SystemVerilog?",
-          "answer": "**logic** is a 4-state data type (0, 1, X, Z) that can be used in both procedural and continuous assignments. It's the preferred type in modern SystemVerilog.\n\n**reg** is older Verilog syntax that can only be used in procedural blocks (always, initial). Despite its name, 'reg' doesn't necessarily synthesize to a register.\n\n**Key difference**: logic can be driven by both continuous assignments (assign) and procedural blocks, while reg can only be driven by procedural blocks.\n\n**Best practice**: Use logic for all 4-state signals in SystemVerilog."
+          "question": "What is the difference between blocking (=) and non-blocking (<=) assignments in Verilog?",
+          "answer": "**Blocking assignment (=)**: Executes sequentially within a procedural block. The next statement does not execute until the current one completes. Used for combinational logic modeling.\n\n**Non-blocking assignment (<=)**: Schedules the assignment to occur at the end of the time step. All right-hand sides are evaluated first, then all left-hand sides are updated simultaneously. Used for sequential (clocked) logic modeling.\n\n**Key rule**: Always use non-blocking assignments (`<=`) inside `always @(posedge clk)` blocks to correctly model flip-flop behavior and avoid race conditions.\n\n**Example**: In a two-flop shift register, using `=` would cause both flops to capture the same value, while `<=` correctly propagates the value through the pipeline."
+        },
+        {
+          "id": 2,
+          "question": "What is the difference between wire and reg in Verilog?",
+          "answer": "**wire**: Represents a physical connection between gates or modules. It must be continuously driven by an `assign` statement or a module output port. It cannot hold a value on its own — if the driver is removed, it goes to high-impedance (Z).\n\n**reg**: A variable that holds its value between assignments. It can only be assigned inside procedural blocks (`always`, `initial`). Despite the name, it does not necessarily synthesize to a hardware register.\n\n**Key distinction**: The choice between `wire` and `reg` is determined by where the signal is driven, not by whether it is a register in hardware.\n\n**Rule of thumb**:\n- Use `wire` for signals driven by continuous assignments or module outputs.\n- Use `reg` for signals assigned inside `always` or `initial` blocks."
+        },
+        {
+          "id": 3,
+          "question": "What is the purpose of the 'generate' construct in Verilog?",
+          "answer": "The `generate` construct allows you to conditionally instantiate or replicate hardware structures at elaboration time, before simulation or synthesis begins.\n\n**Common use cases**:\n- **Replicate instances**: Use `genvar` and a `for` loop to instantiate an array of modules (e.g., a parameterized adder chain).\n- **Conditional logic**: Use `if-generate` or `case-generate` to include different RTL based on parameters (e.g., select between a ripple-carry and carry-lookahead adder based on a parameter).\n\n**Example**:\n```\ngenerate\n  for (genvar i = 0; i < WIDTH; i++) begin : bit_slice\n    my_module u (.in(data[i]), .out(result[i]));\n  end\nendgenerate\n```\n\n**Important**: Generate blocks are evaluated at compile/elaboration time, so the conditions must be based on parameters or constants, not runtime signals."
+        },
+        {
+          "id": 4,
+          "question": "What is a Verilog task and how does it differ from a function?",
+          "answer": "**Task**: A reusable procedural block that can contain timing controls (`#`, `@`, `wait`), consume simulation time, and have any number of inputs, outputs, and inout arguments. Tasks do not return a value directly.\n\n**Function**: A reusable procedural block that executes in zero simulation time (no timing controls allowed), must return exactly one value, and can only have input arguments.\n\n**Key differences**:\n\n| Feature | Task | Function |\n|---|---|---|\n| Simulation time | Can consume time | Must be zero-time |\n| Return value | None (uses output args) | Single return value |\n| Timing controls | Allowed | Not allowed |\n| Typical use | Stimulus, sequences | Calculations, conversions |\n\n**Best practice**: Use functions for combinational computations (e.g., encoding, decoding) and tasks for sequenced operations that require clock cycles."
+        },
+        {
+          "id": 5,
+          "question": "What is the difference between $monitor and $display in Verilog?",
+          "answer": "**$display**: Prints a formatted message to the simulation log exactly once when the statement is executed, similar to `printf` in C. It is a one-shot print triggered by the procedural flow.\n\n**$monitor**: Registers a continuous watch on a list of signals. It automatically prints a message whenever any of the monitored signals changes value. Only one `$monitor` can be active at a time — calling it again replaces the previous one.\n\n**Example**:\n```\n// Prints once when this line executes\n$display(\"Value at this moment: %0d\", data);\n\n// Prints every time 'data' or 'valid' changes\n$monitor(\"%0t: data=%0d valid=%b\", $time, data, valid);\n```\n\n**Use case**: `$display` is preferred for targeted debug prints, while `$monitor` is useful for tracing signal transitions across the full simulation."
+        },
+        {
+          "id": 6,
+          "question": "What are the different types of port declarations in Verilog and how are they used?",
+          "answer": "Verilog modules have three port directions:\n\n**input**: Data flows into the module. Inside the module, an `input` port is implicitly a `wire` and cannot be assigned in a procedural block.\n\n**output**: Data flows out of the module. Can be declared as `wire` (for continuous assignments) or `reg` (for procedural assignments).\n\n**inout**: Bidirectional port. Used for tri-state buses where multiple drivers share the same net. Must be driven through a `wire` with high-impedance (`Z`) control logic.\n\n**ANSI-style declaration (preferred)**:\n```\nmodule my_module (\n  input  wire        clk,\n  input  wire [7:0]  data_in,\n  output reg  [7:0]  data_out,\n  inout  wire        bus\n);\n```\n\n**Key point**: For synthesis, `inout` ports should only be used for true bidirectional pads (I/O cells). Avoid them in internal RTL logic."
+        }
+      ]
+    },
+    {
+      "name": "SystemVerilog for Verification",
+      "icon": "✅",
+      "questions": [
+        {
+          "id": 7,
+          "question": "What is the difference between a program block and a module block in SystemVerilog?",
+          "answer": "**module**: The standard hardware modeling construct. Code inside runs in the Active and NBA (non-blocking assignment) simulation regions. Intended for RTL and gate-level design.\n\n**program**: A verification-specific construct introduced in SystemVerilog. Code inside runs in the Reactive region, which is scheduled after all module Active/NBA activity for that time step is complete.\n\n**Why it matters**: The program block's Reactive scheduling prevents testbench code from racing with the DUT. When a testbench samples a signal inside a program block at a clock edge, the DUT has already settled its outputs, giving a clean, glitch-free sample.\n\n**Best practice**: In modern UVM-based testbenches, `program` blocks are rarely used directly — interfaces with clocking blocks achieve the same race-free sampling in a more reusable way."
+        },
+        {
+          "id": 8,
+          "question": "What is a SystemVerilog interface and why is it used in verification?",
+          "answer": "A **SystemVerilog interface** is a named bundle of signals, along with optional tasks, functions, and clocking blocks, that can be passed as a single port to modules and testbenches.\n\n**Why use interfaces in verification**:\n- **Reduces port clutter**: Instead of passing 20+ individual signals, pass one interface handle.\n- **Encapsulates protocol**: Tasks and functions inside the interface can model bus transactions (e.g., `write()`, `read()`).\n- **Enables clocking blocks**: A `clocking block` inside the interface defines a synchronous sampling/driving domain, eliminating race conditions between testbench and DUT.\n- **Simplifies DUT swapping**: Change the DUT without rewiring the testbench.\n\n**Example**:\n```\ninterface apb_if (input logic clk);\n  logic [31:0] paddr;\n  logic        psel;\n  logic        penable;\n  logic [31:0] pwdata;\n\n  clocking cb @(posedge clk);\n    input  pwdata;\n    output paddr;\n  endclocking\nendinterface\n```"
+        },
+        {
+          "id": 9,
+          "question": "What is the difference between 'rand' and 'randc' in SystemVerilog?",
+          "answer": "Both `rand` and `randc` are class variable qualifiers that enable constrained random generation, but they differ in their randomization behavior:\n\n**rand**: Standard random. Each call to `randomize()` independently draws a new value from the allowed range. The same value can appear consecutively or repeatedly — there is no memory of past values.\n\n**randc**: Random cyclic. SystemVerilog internally tracks which values have been generated in the current cycle. Each value in the allowed set is generated exactly once before any value repeats. After the full set is exhausted, a new cycle begins.\n\n**When to use randc**: Ideal for scenarios where full coverage is required without repetition — for example, randomizing an opcode field to ensure every opcode is exercised before any is repeated.\n\n**Example**:\n```\nclass pkt;\n  rand  bit [7:0] data;   // can repeat randomly\n  randc bit [3:0] opcode; // cycles through all 16 values\nendclass\n```"
+        },
+        {
+          "id": 10,
+          "question": "What are SystemVerilog constraints and how do you write them?",
+          "answer": "**Constraints** are declarative rules defined inside a class that restrict the values a `rand` or `randc` variable can take during randomization. The solver finds a valid assignment satisfying all active constraints.\n\n**Basic syntax**:\n```\nclass packet;\n  rand bit [7:0] length;\n  rand bit [7:0] payload[];\n\n  constraint valid_length {\n    length inside {[1:64]};\n  }\n\n  constraint payload_size {\n    payload.size() == length;\n  }\nendclass\n```\n\n**Common constraint types**:\n- **Range**: `x inside {[min:max]};`\n- **Weighted distribution**: `x dist {0 := 10, 1 := 90};` (10% chance of 0, 90% chance of 1)\n- **Implication**: `if (mode == WRITE) addr < 32;`\n- **Foreach**: `foreach (arr[i]) arr[i] > 0;`\n\n**Key points**:\n- Constraints are solved simultaneously, not sequentially.\n- Use `constraint_mode(0)` to disable a specific constraint at runtime.\n- Over-constraining (no valid solution) causes `randomize()` to return 0."
+        },
+        {
+          "id": 11,
+          "question": "What is a clocking block in SystemVerilog and what problem does it solve?",
+          "answer": "A **clocking block** is a construct defined inside an interface that groups signals relative to a clock edge and specifies their input/output skew. It synchronizes testbench signal sampling and driving to prevent race conditions with the DUT.\n\n**The problem it solves**: In simulation, if a testbench drives or samples a signal at the exact same time step as the DUT clock edge, there is a race condition — the order of evaluation is non-deterministic.\n\n**How clocking blocks help**:\n- **Input skew** (default `1step`): Signals are sampled just *before* the clock edge, in the Preponed region, after the DUT has settled.\n- **Output skew** (default `#1`): Signals are driven *after* the clock edge, ensuring the DUT sees stable inputs.\n\n**Example**:\n```\nclocking driver_cb @(posedge clk);\n  default input #1step output #1;\n  input  data_out;  // sampled before edge\n  output data_in;   // driven after edge\nendclocking\n```\n\n**Usage in testbench**: Drive via `cb.data_in <= value;` and sample via `value = cb.data_out;`."
+        },
+        {
+          "id": 12,
+          "question": "What is the difference between 'static' and 'automatic' tasks and functions in SystemVerilog?",
+          "answer": "The distinction controls how local variables are allocated:\n\n**Static** (default in modules): Local variables have a single, shared storage location that persists for the entire simulation. Concurrent calls to a static task share the same variables, which can cause data corruption.\n\n**Automatic**: Each call to the task or function gets its own private copy of local variables on a stack. Concurrent or recursive calls are safe because they do not share storage.\n\n**Default behavior by context**:\n- `module`, `interface`: tasks/functions are **static** by default.\n- `class`: methods are **automatic** by default (required for OOP correctness).\n- `program`: tasks/functions are **automatic** by default.\n\n**Declaring automatic**:\n```\ntask automatic drive_packet(input bit [7:0] data);\n  // local vars here are per-call\nendtask\n```\n\n**Best practice**: Always declare tasks and functions as `automatic` in non-class verification code, especially when using fork-join or recursive calls."
+        }
+      ]
+    },
+    {
+      "name": "UVM",
+      "icon": "🏗️",
+      "questions": [
+        {
+          "id": 13,
+          "question": "What are the UVM phases and in what order do they execute?",
+          "answer": "UVM phases provide a standardized lifecycle for testbench components, ensuring orderly startup, execution, and shutdown.\n\n**Build phases (top-down):**\n`build_phase` → `connect_phase` → `end_of_elaboration_phase` → `start_of_simulation_phase`\n\n**Run-time phases (parallel, time-consuming):**\n`run_phase` (contains sub-phases: `reset`, `configure`, `main`, `shutdown`)\n\n**Cleanup phases (bottom-up):**\n`extract_phase` → `check_phase` → `report_phase` → `final_phase`\n\n**Key points**:\n- Build phases execute **top-down** (parent before child) so parents can create children before children try to connect.\n- Cleanup phases execute **bottom-up** (child before parent).\n- `run_phase` is the only time-consuming phase where simulation time advances.\n- Components call `phase.raise_objection()` and `phase.drop_objection()` to control when the run phase ends."
+        },
+        {
+          "id": 14,
+          "question": "What is the UVM factory and why is it important?",
+          "answer": "The **UVM factory** is a global registry that maps class type names to their constructors. Instead of instantiating objects directly with `new()`, components and objects are created through the factory using `::type_id::create()`.\n\n**Why it matters — overrides**: The factory allows you to substitute one class with a derived class at runtime without modifying the original testbench code. This is the key mechanism for reuse and test customization.\n\n**Types of overrides**:\n- **Type override**: Replace every instance of a class globally.\n  `my_seq::type_id::set_type_override(my_debug_seq::get_type());`\n- **Instance override**: Replace only a specific named instance.\n  `my_seq::type_id::set_inst_override(my_debug_seq::get_type(), \"uvm_test_top.env.agent.*\");`\n\n**Registration**: Every class must be registered with the factory using the macro:\n```\n`uvm_component_utils(my_driver)\n`uvm_object_utils(my_sequence_item)\n```\n\n**Best practice**: Always create UVM components and objects via the factory to preserve override capability."
+        },
+        {
+          "id": 15,
+          "question": "What is the difference between uvm_component and uvm_object?",
+          "answer": "These are the two fundamental base classes in UVM, and the choice between them determines how an object behaves in the testbench hierarchy.\n\n**uvm_component**:\n- Has a fixed location in the testbench hierarchy (parent-child tree).\n- Persists for the entire simulation — created once, never cloned or copied.\n- Participates in UVM phases (`build_phase`, `run_phase`, etc.).\n- Has a string instance name and a parent handle.\n- Examples: `uvm_driver`, `uvm_monitor`, `uvm_scoreboard`, `uvm_agent`, `uvm_env`.\n\n**uvm_object**:\n- Has no position in the component hierarchy.\n- Transient — created, used, and discarded (or cloned) as needed.\n- Does not participate in phases.\n- Supports `copy()`, `clone()`, `compare()`, `print()`, and `pack()`/`unpack()` methods.\n- Examples: `uvm_sequence_item`, `uvm_sequence`, `uvm_reg`.\n\n**Rule of thumb**: If it is a structural piece of the testbench that lives for the whole simulation, extend `uvm_component`. If it is data that flows through the testbench, extend `uvm_object`."
+        },
+        {
+          "id": 16,
+          "question": "What is a UVM sequence and how does it communicate with a driver?",
+          "answer": "A **UVM sequence** is a `uvm_object`-derived class that generates a stream of sequence items (`uvm_sequence_item`) and sends them to a driver for execution on the DUT interface.\n\n**Communication mechanism — the sequencer/driver handshake**:\nThe sequence and driver communicate through a `uvm_sequencer` using a two-way `TLM` (Transaction Level Modeling) handshake:\n\n1. **Sequence side** (`body()` task):\n```\nmy_item req = my_item::type_id::create(\"req\");\nstart_item(req);       // request the sequencer\nrandomize(req);        // fill in the item\nfinish_item(req);      // send to driver, block until done\n```\n\n2. **Driver side** (`run_phase()` task):\n```\nmy_item req;\nseq_item_port.get_next_item(req);  // get item from sequencer\n// drive req onto DUT interface\nseq_item_port.item_done();         // signal completion\n```\n\n**Key point**: `finish_item()` blocks the sequence until the driver calls `item_done()`, creating a natural back-pressure mechanism that synchronizes stimulus generation with DUT throughput."
+        },
+        {
+          "id": 17,
+          "question": "What is a UVM scoreboard and how is it typically connected?",
+          "answer": "A **UVM scoreboard** is a `uvm_component` responsible for checking DUT correctness. It receives transactions from one or more monitors, computes the expected output using a reference model, and compares it against the actual DUT output.\n\n**Typical architecture**:\n- An **input monitor** observes stimulus going into the DUT and sends transactions to the scoreboard's input port.\n- An **output monitor** observes DUT responses and sends them to the scoreboard's output port.\n- The scoreboard contains a reference model that predicts the expected response for each input.\n\n**Connection using TLM Analysis Ports**:\nMonitors write to `uvm_analysis_port`; the scoreboard listens via `uvm_analysis_imp`:\n```\n// In scoreboard\nuvm_analysis_imp #(my_item, my_scoreboard) input_export;\n\nfunction void write(my_item item);\n  // compare item against expected\nendfunction\n```\n\n**Connection in env `connect_phase`**:\n```\nmonitor.ap.connect(scoreboard.input_export);\n```\n\n**Best practice**: Use `uvm_tlm_analysis_fifo` when the scoreboard needs to correlate input and output transactions asynchronously, storing inputs until matching outputs arrive."
+        },
+        {
+          "id": 18,
+          "question": "What is the UVM configuration database (uvm_config_db) and how is it used?",
+          "answer": "The **`uvm_config_db`** is a global, hierarchical key-value store used to pass configuration data between testbench components without requiring direct handles or constructor arguments.\n\n**Basic usage**:\n```\n// Setting a value (typically in a test or env)\nuvm_config_db #(int)::set(\n  this,               // context (scope)\n  \"uvm_test_top.env.agent.driver\",  // target path\n  \"num_transactions\", // field name\n  100                 // value\n);\n\n// Getting a value (in the target component's build_phase)\nif (!uvm_config_db #(int)::get(\n  this, \"\", \"num_transactions\", num_transactions))\n  `uvm_fatal(\"CFG\", \"num_transactions not found\")\n```\n\n**Common use cases**:\n- Passing a virtual interface handle from the top-level module to a driver.\n- Passing configuration objects (`uvm_object` subclasses) to agents.\n- Enabling/disabling features in components from the test level.\n\n**Virtual interface pattern** (most common):\n```\n// Top-level module\nuvm_config_db #(virtual my_if)::set(null, \"uvm_test_top.*\", \"vif\", dut_if);\n\n// Driver build_phase\nuvm_config_db #(virtual my_if)::get(this, \"\", \"vif\", vif);\n```\n\n**Best practice**: Always check the return value of `get()` and use `` `uvm_fatal `` if the entry is not found."
         }
       ]
     }
