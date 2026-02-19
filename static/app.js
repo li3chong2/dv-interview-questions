@@ -75,27 +75,18 @@ function selectCategory(category) {
     renderQuestions();
 }
 
-// Render question cards
+// Render question cards or category overview
 function renderQuestions() {
     const container = document.getElementById('questions-container');
     container.innerHTML = '';
 
-    let questions = [];
-
     if (currentCategory === 'all') {
-        // Get all questions from all categories
-        questionsData.categories.forEach(cat => {
-            cat.questions.forEach(q => {
-                questions.push({ ...q, category: cat.name });
-            });
-        });
-    } else {
-        // Get questions from selected category
-        const category = questionsData.categories.find(c => c.name === currentCategory);
-        if (category) {
-            questions = category.questions.map(q => ({ ...q, category: category.name }));
-        }
+        renderCategoryOverview(container);
+        return;
     }
+
+    const category = questionsData.categories.find(c => c.name === currentCategory);
+    const questions = category ? category.questions.map(q => ({ ...q, category: category.name })) : [];
 
     // Update question count
     document.getElementById('question-count').textContent =
@@ -104,6 +95,28 @@ function renderQuestions() {
     // Render each question
     questions.forEach((q, index) => {
         const card = createQuestionCard(q, index);
+        container.appendChild(card);
+    });
+}
+
+// Render overview cards linking to each category
+function renderCategoryOverview(container) {
+    const totalQuestions = questionsData.categories.reduce((sum, cat) => sum + cat.questions.length, 0);
+    document.getElementById('question-count').textContent =
+        `${questionsData.categories.length} categories`;
+
+    questionsData.categories.forEach(category => {
+        const card = document.createElement('div');
+        card.className = 'category-card';
+        card.innerHTML = `
+            <span class="category-card-icon">${category.icon || '📁'}</span>
+            <div class="category-card-body">
+                <h3 class="category-card-title">${category.name}</h3>
+                <p class="category-card-count">${category.questions.length} question${category.questions.length !== 1 ? 's' : ''}</p>
+            </div>
+            <span class="category-card-arrow"></span>
+        `;
+        card.addEventListener('click', () => selectCategory(category.name));
         container.appendChild(card);
     });
 }

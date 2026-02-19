@@ -131,6 +131,55 @@ body {
     border-radius: 20px;
 }
 
+/* Category Overview Cards */
+.category-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.category-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.category-card-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.category-card-body {
+    flex: 1;
+}
+
+.category-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+}
+
+.category-card-count {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.category-card-arrow {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 6px solid transparent;
+    border-left: 7px solid var(--text-secondary);
+    flex-shrink: 0;
+}
+
 /* Question Cards */
 .questions-container {
     display: flex;
