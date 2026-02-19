@@ -119,7 +119,7 @@ function createQuestionCard(question, index) {
     card.innerHTML = `
         <div class="question-header">
             <span class="question-text">${question.question}</span>
-            <span class="expand-icon">▼</span>
+            <span class="expand-icon"></span>
         </div>
         <div class="answer-container">
             <div class="answer-content">
