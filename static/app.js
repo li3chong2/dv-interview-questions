@@ -35,7 +35,7 @@ function renderCategories() {
     const allItem = document.createElement('li');
     allItem.innerHTML = `
         <button class="category-btn active" data-category="all">
-            <span class="category-icon">ð</span>
+            <span class="category-icon">📚</span>
             All Questions
         </button>
     `;
@@ -46,7 +46,7 @@ function renderCategories() {
         const li = document.createElement('li');
         li.innerHTML = `
             <button class="category-btn" data-category="${category.name}">
-                <span class="category-icon">${category.icon || 'ð'}</span>
+                <span class="category-icon">${category.icon || '📁'}</span>
                 ${category.name}
             </button>
         `;
@@ -119,7 +119,7 @@ function createQuestionCard(question, index) {
     card.innerHTML = `
         <div class="question-header">
             <span class="question-text">${question.question}</span>
-            <span class="expand-icon">â¼</span>
+            <span class="expand-icon">▼</span>
         </div>
         <div class="answer-container">
             <div class="answer-content">
