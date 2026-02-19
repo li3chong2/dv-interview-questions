@@ -1,0 +1,16 @@
+
+{
+  "categories": [
+    {
+      "name": "SystemVerilog Basics",
+      "icon": "ð",
+      "questions": [
+        {
+          "id": 1,
+          "question": "What is the difference between logic and reg in SystemVerilog?",
+          "answer": "**logic** is a 4-state data type (0, 1, X, Z) that can be used in both procedural and continuous assignments. It's the preferred type in modern SystemVerilog.\n\n**reg** is older Verilog syntax that can only be used in procedural blocks (always, initial). Despite its name, 'reg' doesn't necessarily synthesize to a register.\n\n**Key difference**: logic can be driven by both continuous assignments (assign) and procedural blocks, while reg can only be driven by procedural blocks.\n\n**Best practice**: Use logic for all 4-state signals in SystemVerilog."
+        }
+      ]
+    }
+  ]
+}
